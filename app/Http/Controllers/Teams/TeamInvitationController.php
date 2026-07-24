@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Teams;
 
-use App\Enums\TeamRole;
+use App\Domain\AuthTenant\Enums\TeamRole;
+use App\Domain\AuthTenant\Models\Team;
+use App\Domain\AuthTenant\Models\TeamInvitation;
+use App\Domain\AuthTenant\Notifications\Teams\TeamInvitation as TeamInvitationNotification;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Teams\CreateTeamInvitationRequest;
 use App\Http\Requests\Teams\RespondToTeamInvitationRequest;
-use App\Models\Team;
-use App\Models\TeamInvitation;
-use App\Notifications\Teams\TeamInvitation as TeamInvitationNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;

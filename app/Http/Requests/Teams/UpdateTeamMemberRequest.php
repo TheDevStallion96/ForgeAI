@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Teams;
 
-use App\Enums\TeamRole;
+use App\Domain\AuthTenant\Enums\TeamRole;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;

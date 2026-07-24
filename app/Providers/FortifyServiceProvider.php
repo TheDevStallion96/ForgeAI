@@ -2,14 +2,14 @@
 
 namespace App\Providers;
 
-use App\Actions\Fortify\CreateNewUser;
-use App\Actions\Fortify\ResetUserPassword;
+use App\Domain\AuthTenant\Actions\Fortify\CreateNewUser;
+use App\Domain\AuthTenant\Actions\Fortify\ResetUserPassword;
+use App\Domain\AuthTenant\Models\TeamInvitation;
 use App\Http\Responses\LoginResponse;
 use App\Http\Responses\PasskeyLoginResponse;
 use App\Http\Responses\RegisterResponse;
 use App\Http\Responses\TwoFactorLoginResponse;
 use App\Http\Responses\VerifyEmailResponse;
-use App\Models\TeamInvitation;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;

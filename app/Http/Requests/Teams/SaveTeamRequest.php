@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Teams;
 
-use App\Rules\TeamName;
+use App\Domain\AuthTenant\Rules\TeamName;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 

@@ -2,7 +2,7 @@
 
 namespace App\Http\Responses\Concerns;
 
-use App\Models\Team;
+use App\Domain\AuthTenant\Models\Team;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
 

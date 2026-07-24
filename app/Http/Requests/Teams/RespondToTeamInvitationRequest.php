@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Teams;
 
-use App\Rules\ValidTeamInvitation;
+use App\Domain\AuthTenant\Rules\ValidTeamInvitation;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 

@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests\Teams;
 
-use App\Enums\TeamRole;
-use App\Models\Team;
-use App\Rules\UniqueTeamInvitation;
+use App\Domain\AuthTenant\Enums\TeamRole;
+use App\Domain\AuthTenant\Models\Team;
+use App\Domain\AuthTenant\Rules\UniqueTeamInvitation;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;

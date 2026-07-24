@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
-use App\Enums\TeamRole;
-use App\Models\Team;
-use App\Models\TeamInvitation;
-use App\Models\User;
+use App\Domain\AuthTenant\Enums\TeamRole;
+use App\Domain\AuthTenant\Models\Team;
+use App\Domain\AuthTenant\Models\TeamInvitation;
+use App\Domain\AuthTenant\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class TeamInvitationFactory extends Factory
 {
+    protected $model = TeamInvitation::class;
+
     /**
      * Define the model's default state.
      *
