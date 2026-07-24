@@ -1,0 +1,33 @@
+<?php
+
+namespace App\Domain\Workspace\Models;
+
+use App\Domain\AuthTenant\Models\Organization;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
+
+class Workspace extends Model
+{
+    protected $fillable = [
+        'organization_id',
+        'name',
+        'slug',
+        'description',
+        'status',
+    ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (Workspace $workspace) {
+            if (empty($workspace->slug)) {
+                $workspace->slug = Str::slug($workspace->name);
+            }
+        });
+    }
+
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
+    }
+}
