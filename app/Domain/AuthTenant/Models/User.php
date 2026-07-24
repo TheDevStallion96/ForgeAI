@@ -2,6 +2,7 @@
 
 namespace App\Domain\AuthTenant\Models;
 
+use App\Domain\AuthTenant\Concerns\BelongsToTenant;
 use App\Domain\AuthTenant\Concerns\HasTeams;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -40,7 +41,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasTeams, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+    use BelongsToTenant, HasFactory, HasTeams, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
     protected static function newFactory(): UserFactory
     {

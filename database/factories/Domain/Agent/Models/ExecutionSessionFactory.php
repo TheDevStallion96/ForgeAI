@@ -5,6 +5,7 @@ namespace Database\Factories\Domain\Agent\Models;
 use App\Domain\Agent\Enums\SessionStatus;
 use App\Domain\Agent\Models\Agent;
 use App\Domain\Agent\Models\ExecutionSession;
+use App\Domain\AuthTenant\Models\Organization;
 use App\Domain\AuthTenant\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -15,6 +16,7 @@ class ExecutionSessionFactory extends Factory
     public function definition(): array
     {
         return [
+            'organization_id' => Organization::factory(),
             'agent_id' => Agent::factory(),
             'user_id' => User::factory(),
             'status' => SessionStatus::Active,
