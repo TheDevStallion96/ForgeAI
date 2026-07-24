@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Domain\AIEngine\Contracts\AIEngine;
+use App\Domain\AIEngine\Services\AIEngineService;
 use App\Domain\AuthTenant\Models\Team;
 use App\Domain\AuthTenant\Policies\TeamPolicy;
 use Carbon\CarbonImmutable;
@@ -18,7 +20,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(AIEngine::class, AIEngineService::class);
     }
 
     /**
