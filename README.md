@@ -11,7 +11,7 @@
   <img src="https://img.shields.io/badge/build-passing-brightgreen" alt="Build" />
 </div>
 
-# ForgeAI — The Operating System for Software Engineering
+# ForgeAI
 
 **ForgeAI** is an open-source AI engineering platform that orchestrates human engineers and specialized autonomous AI agents in a shared, observable environment. Together, they collaboratively plan, design, architect, build, test, review, deploy, monitor, and continuously evolve software systems.
 
