@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Domain\Agent\Models\Agent;
+use App\Domain\Agent\Policies\AgentPolicy;
 use App\Domain\AIEngine\Contracts\AIEngine;
 use App\Domain\AIEngine\Services\AIEngineService;
 use App\Domain\AuthTenant\Models\Team;
@@ -29,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::policy(Team::class, TeamPolicy::class);
+        Gate::policy(Agent::class, AgentPolicy::class);
 
         $this->configureDefaults();
     }

@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
-import { useForm } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
+
+const page = usePage<{
+    agents: { id: number; name: string }[];
+}>();
 
 const form = useForm({
     prompt: '',
-    system_instruction: '',
+    agent_id: page.props.agents?.[0]?.id ?? '',
 });
 
 const response = ref('');
@@ -37,20 +40,27 @@ function submit() {
 
         <div class="mb-4">
             <form @submit.prevent="submit">
+                <div v-if="page.props.agents?.length" class="mb-3">
+                    <select
+                        v-model="form.agent_id"
+                        class="w-full rounded-lg border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                    >
+                        <option
+                            v-for="agent in page.props.agents"
+                            :key="agent.id"
+                            :value="agent.id"
+                        >
+                            {{ agent.name }}
+                        </option>
+                    </select>
+                </div>
+
                 <textarea
                     v-model="form.prompt"
                     class="mb-3 w-full rounded-lg border border-gray-300 p-3 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                     rows="4"
                     placeholder="Enter your prompt..."
                 ></textarea>
-
-                <div class="mb-3">
-                    <input
-                        v-model="form.system_instruction"
-                        class="w-full rounded-lg border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                        placeholder="System instruction (optional)"
-                    />
-                </div>
 
                 <button
                     type="submit"
