@@ -207,3 +207,27 @@ Vue components must have a single root element.
 - IMPORTANT: Activate `inertia-vue-development` when working with Inertia Vue client-side patterns.
 
 </laravel-boost-guidelines>
+
+=== forgeai architecture & reference rules ===
+
+# Architecture Documentation & Reference
+
+This application follows the official architecture blueprints and technical specifications documented in `/docs/`. All AI agents working on this project MUST consult and strictly adhere to these documents before designing, modifying, or creating any codebase components.
+
+## Project Reference Index (`/docs/`)
+
+- **Master Index**: Consult [docs/INDEX.md](file:///home/tristan/Projects/Forge_AI/docs/INDEX.md) for an overview of all architecture specifications and ADRs.
+- **Product Vision & Strategy**: [docs/01-product-vision.md](file:///home/tristan/Projects/Forge_AI/docs/01-product-vision.md) for target user personas, NFRs, and capability goals.
+- **Software Architecture Blueprint**: [docs/02-software-architecture-blueprint.md](file:///home/tristan/Projects/Forge_AI/docs/02-software-architecture-blueprint.md) for Modular Monolith domain boundaries (`app/Domain/*`), module rules, and C4 topology.
+- **AI & Agent Framework**: [docs/03-ai-and-agent-framework.md](file:///home/tristan/Projects/Forge_AI/docs/03-ai-and-agent-framework.md) for `laravel/ai` SDK usage, multi-agent state machine, tool sandboxing, provider failover, and RAG vector pipeline specifications.
+- **Domain Model & Logical DB**: [docs/04-domain-model-and-database-design.md](file:///home/tristan/Projects/Forge_AI/docs/04-domain-model-and-database-design.md) for DDD aggregates, PostgreSQL + `pgvector` schemas, and multi-tenant query scoping policies.
+- **API & Event Catalogue**: [docs/05-api-and-event-catalogue.md](file:///home/tristan/Projects/Forge_AI/docs/05-api-and-event-catalogue.md) for Wayfinder typed actions, Domain Event catalog, and Redis Horizon queue priorities.
+- **Security Architecture**: [docs/06-security-architecture.md](file:///home/tristan/Projects/Forge_AI/docs/06-security-architecture.md) for STRIDE threat mitigation, Fortify + Passkey authentication, RBAC, and prompt injection shields.
+- **Deployment & Testing Strategy**: [docs/07-deployment-and-testing-strategy.md](file:///home/tristan/Projects/Forge_AI/docs/07-deployment-and-testing-strategy.md) for Docker topology, Pest v4 test matrix, and LLM evaluation harnesses.
+- **Architectural Decision Records**: Refer to [docs/adrs/](file:///home/tristan/Projects/Forge_AI/docs/adrs/) for binding technical decisions (ADR-0001 Tech Stack, ADR-0002 AI Engine, ADR-0003 Modular Monolith).
+
+## Development Rules
+1. **Always Consult Architecture Docs First**: Before creating new models, services, controllers, or database migrations, check the corresponding domain model and blueprint in `/docs/`.
+2. **Preserve Domain Module Boundaries**: Maintain strict separation between `AuthTenant`, `Agent`, `AIEngine`, `KnowledgeVector`, `Automation`, and `Governance` modules.
+3. **Check ADRs**: Do not deviate from accepted Architectural Decision Records without explicit approval and an updated ADR.
+
