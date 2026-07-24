@@ -1,6 +1,18 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, FolderGit2, LayoutGrid } from '@lucide/vue';
+import {
+    Activity,
+    Blocks,
+    BookOpen,
+    BookMarked,
+    Bot,
+    FolderGit2,
+    LayoutGrid,
+    Layers,
+    Library,
+    Rocket,
+    Shield,
+} from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
@@ -31,7 +43,61 @@ const mainNavItems = computed<NavItem[]>(() => [
         href: dashboardUrl.value,
         icon: LayoutGrid,
     },
+    {
+        title: 'Workspaces',
+        href: '/workspaces',
+        icon: Layers,
+    },
+    {
+        title: 'AI Agents',
+        href: '/agents',
+        icon: Bot,
+    },
 ]);
+
+const engineeringNavItems: NavItem[] = [
+    {
+        title: 'Architecture',
+        href: '/architecture',
+        icon: BookMarked,
+    },
+    {
+        title: 'Source Control',
+        href: '/source-control',
+        icon: FolderGit2,
+    },
+    {
+        title: 'Deployments',
+        href: '/deployments',
+        icon: Rocket,
+    },
+];
+
+const intelligenceNavItems: NavItem[] = [
+    {
+        title: 'Knowledge Hub',
+        href: '/knowledge',
+        icon: Library,
+    },
+    {
+        title: 'Monitoring',
+        href: '/monitoring',
+        icon: Activity,
+    },
+    {
+        title: 'Marketplace',
+        href: '/marketplace',
+        icon: Blocks,
+    },
+];
+
+const governanceNavItems: NavItem[] = [
+    {
+        title: 'Governance',
+        href: '/governance/api-keys',
+        icon: Shield,
+    },
+];
 
 const footerNavItems: NavItem[] = [
     {
@@ -67,7 +133,10 @@ const footerNavItems: NavItem[] = [
         </SidebarHeader>
 
         <SidebarContent>
-            <NavMain :items="mainNavItems" />
+            <NavMain :items="mainNavItems" label="Platform" />
+            <NavMain :items="engineeringNavItems" label="Engineering" />
+            <NavMain :items="intelligenceNavItems" label="Intelligence" />
+            <NavMain :items="governanceNavItems" label="Administration" />
         </SidebarContent>
 
         <SidebarFooter>
