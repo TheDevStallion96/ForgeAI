@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\TeamInvitation;
+use App\Domain\AuthTenant\Models\TeamInvitation;
 use Illuminate\Support\Facades\Schedule;
 
 Schedule::call(function () {

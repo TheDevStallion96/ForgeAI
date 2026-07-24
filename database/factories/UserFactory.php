@@ -2,9 +2,10 @@
 
 namespace Database\Factories;
 
-use App\Enums\TeamRole;
-use App\Models\Team;
-use App\Models\User;
+use App\Domain\AuthTenant\Enums\TeamRole;
+use App\Domain\AuthTenant\Models\Organization;
+use App\Domain\AuthTenant\Models\Team;
+use App\Domain\AuthTenant\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -14,16 +15,10 @@ use Illuminate\Support\Str;
  */
 class UserFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
+    protected $model = User::class;
+
     protected static ?string $password;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
@@ -38,14 +33,16 @@ class UserFactory extends Factory
         ];
     }
 
-    /**
-     * Configure the model factory.
-     */
     public function configure(): static
     {
-        return $this->afterCreating(function ($user) {
+        return $this->afterCreating(function (User $user) {
+            $organization = Organization::factory()->create();
+
+            $user->update(['organization_id' => $organization->id]);
+
             $team = Team::factory()->personal()->create([
                 'name' => $user->name."'s Team",
+                'organization_id' => $organization->id,
             ]);
 
             $team->members()->attach($user, [
@@ -56,9 +53,6 @@ class UserFactory extends Factory
         });
     }
 
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
     public function unverified(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -66,9 +60,6 @@ class UserFactory extends Factory
         ]);
     }
 
-    /**
-     * Indicate that the model has two-factor authentication configured.
-     */
     public function withTwoFactor(): static
     {
         return $this->state(fn (array $attributes) => [

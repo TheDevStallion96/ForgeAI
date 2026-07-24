@@ -1,9 +1,9 @@
 <?php
 
-use App\Enums\TeamRole;
-use App\Models\Team;
-use App\Models\TeamInvitation;
-use App\Models\User;
+use App\Domain\AuthTenant\Enums\TeamRole;
+use App\Domain\AuthTenant\Models\Team;
+use App\Domain\AuthTenant\Models\TeamInvitation;
+use App\Domain\AuthTenant\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('registration screen can be rendered', function () {

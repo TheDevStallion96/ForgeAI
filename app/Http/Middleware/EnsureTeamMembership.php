@@ -2,9 +2,9 @@
 
 namespace App\Http\Middleware;
 
-use App\Enums\TeamRole;
-use App\Models\Team;
-use App\Models\User;
+use App\Domain\AuthTenant\Enums\TeamRole;
+use App\Domain\AuthTenant\Models\Team;
+use App\Domain\AuthTenant\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;

@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Teams;
 
-use App\Models\Team;
+use App\Domain\AuthTenant\Models\Team;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;

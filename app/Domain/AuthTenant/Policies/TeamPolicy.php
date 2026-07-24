@@ -1,0 +1,67 @@
+<?php
+
+namespace App\Domain\AuthTenant\Policies;
+
+use App\Domain\AuthTenant\Enums\TeamPermission;
+use App\Domain\AuthTenant\Models\Team;
+use App\Domain\AuthTenant\Models\User;
+
+class TeamPolicy
+{
+    public function viewAny(User $user): bool
+    {
+        return true;
+    }
+
+    public function view(User $user, Team $team): bool
+    {
+        return $user->belongsToTeam($team);
+    }
+
+    public function create(User $user): bool
+    {
+        return true;
+    }
+
+    public function update(User $user, Team $team): bool
+    {
+        return $user->hasTeamPermission($team, TeamPermission::UpdateTeam);
+    }
+
+    public function leave(User $user, Team $team): bool
+    {
+        return ! $team->is_personal
+            && $user->belongsToTeam($team)
+            && ! $user->ownsTeam($team);
+    }
+
+    public function addMember(User $user, Team $team): bool
+    {
+        return $user->hasTeamPermission($team, TeamPermission::AddMember);
+    }
+
+    public function updateMember(User $user, Team $team): bool
+    {
+        return $user->hasTeamPermission($team, TeamPermission::UpdateMember);
+    }
+
+    public function removeMember(User $user, Team $team): bool
+    {
+        return $user->hasTeamPermission($team, TeamPermission::RemoveMember);
+    }
+
+    public function inviteMember(User $user, Team $team): bool
+    {
+        return $user->hasTeamPermission($team, TeamPermission::CreateInvitation);
+    }
+
+    public function cancelInvitation(User $user, Team $team): bool
+    {
+        return $user->hasTeamPermission($team, TeamPermission::CancelInvitation);
+    }
+
+    public function delete(User $user, Team $team): bool
+    {
+        return ! $team->is_personal && $user->hasTeamPermission($team, TeamPermission::DeleteTeam);
+    }
+}
