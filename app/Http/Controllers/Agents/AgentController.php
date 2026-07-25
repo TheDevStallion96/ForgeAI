@@ -35,7 +35,10 @@ class AgentController extends Controller
     public function create(): Response
     {
         return Inertia::render('agents/Create', [
-            'providers' => AIProvider::cases(),
+            'providers' => collect(AIProvider::cases())->map(fn (AIProvider $p) => [
+                'name' => $p->label(),
+                'value' => $p->value,
+            ])->toArray(),
         ]);
     }
 
@@ -73,7 +76,10 @@ class AgentController extends Controller
                 'temperature' => (float) $agent->temperature,
                 'is_active' => $agent->is_active,
             ],
-            'providers' => AIProvider::cases(),
+            'providers' => collect(AIProvider::cases())->map(fn (AIProvider $p) => [
+                'name' => $p->label(),
+                'value' => $p->value,
+            ])->toArray(),
         ]);
     }
 

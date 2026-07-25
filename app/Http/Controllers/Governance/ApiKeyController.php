@@ -17,7 +17,7 @@ class ApiKeyController extends Controller
 
     public function index(Request $request): Response
     {
-        $organization = $request->user()->organization;
+        $organization = $request->user()->ensureOrganization();
 
         $keys = $this->secretsManager->list($organization->id);
 
@@ -34,13 +34,13 @@ class ApiKeyController extends Controller
             'name' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $organization = $request->user()->organization;
+        $organization = $request->user()->ensureOrganization();
 
         $this->secretsManager->store(
             $organization->id,
             $data['provider'],
             $data['key'],
-            $data['name'],
+            $data['name'] ?? null,
         );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('API key added.')]);

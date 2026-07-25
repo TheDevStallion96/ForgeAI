@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -55,5 +56,21 @@ class User extends Authenticatable implements PasskeyUser
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    public function ensureOrganization(): Organization
+    {
+        if ($this->organization_id !== null) {
+            return $this->organization;
+        }
+
+        $organization = Organization::create([
+            'name' => "{$this->name}'s Organization",
+            'slug' => Str::slug($this->name).'-'.Str::random(4),
+        ]);
+
+        $this->update(['organization_id' => $organization->id]);
+
+        return $organization;
     }
 }

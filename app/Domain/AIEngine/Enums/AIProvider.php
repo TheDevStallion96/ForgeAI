@@ -44,4 +44,12 @@ enum AIProvider: string
             self::OpenAiCompatible => Lab::OpenAiCompatible,
         };
     }
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::OpenAiCompatible => 'OpenAI Compatible',
+            default => $this->name,
+        };
+    }
 }

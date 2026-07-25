@@ -13,7 +13,7 @@ class TokenBudgetController extends Controller
 {
     public function show(Request $request): Response
     {
-        $organization = $request->user()->organization;
+        $organization = $request->user()->ensureOrganization();
 
         $budget = TokenBudget::query()
             ->firstOrCreate(
@@ -43,7 +43,7 @@ class TokenBudgetController extends Controller
             'monthly_limit' => ['required', 'integer', 'min:1000'],
         ]);
 
-        $organization = $request->user()->organization;
+        $organization = $request->user()->ensureOrganization();
 
         $budget = TokenBudget::query()
             ->firstOrCreate(
