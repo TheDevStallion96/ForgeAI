@@ -1,9 +1,9 @@
 <?php
 
+use App\Domain\AuthTenant\Models\Organization;
 use App\Domain\Marketplace\Models\Plugin;
 use App\Domain\Marketplace\Models\PluginInstallation;
 use App\Domain\Marketplace\Services\PluginRegistry;
-use App\Domain\AuthTenant\Models\Organization;
 
 beforeEach(function () {
     $this->registry = app(PluginRegistry::class);

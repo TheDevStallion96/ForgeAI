@@ -5,7 +5,6 @@ use App\Domain\AuthTenant\Models\User;
 use App\Domain\Marketplace\Models\Plugin;
 use App\Domain\Marketplace\Models\PluginInstallation;
 use App\Domain\McpGateway\Models\McpConnection;
-use Laravel\Fortify\Features;
 
 beforeEach(function () {
     $this->user = User::factory()->create();

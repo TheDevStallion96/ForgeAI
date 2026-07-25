@@ -1,10 +1,7 @@
 <?php
 
-use App\Domain\Automation\Models\ToolDefinition;
 use App\Domain\Automation\Services\ToolRegistry;
 use App\Domain\McpGateway\Services\McpServer;
-use App\Domain\Automation\Contracts\ToolResult;
-use App\Domain\Automation\Contracts\ToolInterface;
 
 beforeEach(function () {
     $this->toolRegistry = app(ToolRegistry::class);

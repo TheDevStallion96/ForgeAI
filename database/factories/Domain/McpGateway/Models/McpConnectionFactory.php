@@ -14,9 +14,9 @@ class McpConnectionFactory extends Factory
     {
         return [
             'organization_id' => Organization::factory(),
-            'name' => fake()->words(2, true) . ' MCP',
+            'name' => fake()->words(2, true).' MCP',
             'transport_type' => fake()->randomElement(['stdio', 'sse']),
-            'command' => 'node ' . fake()->filePath(),
+            'command' => 'node '.fake()->filePath(),
             'is_enabled' => true,
         ];
     }

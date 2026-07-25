@@ -13,7 +13,11 @@ beforeEach(function () {
 });
 
 afterEach(function () {
-    shell_exec("rm -rf {$this->tempDir}");
+    if (PHP_OS_FAMILY === 'Windows') {
+        shell_exec("rmdir /s /q {$this->tempDir} 2>NUL");
+    } else {
+        shell_exec("rm -rf {$this->tempDir}");
+    }
 });
 
 it('git_branch lists branches', function () {
