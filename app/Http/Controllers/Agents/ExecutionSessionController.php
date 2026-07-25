@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Agents;
 
+use App\Domain\Agent\Enums\MessageRole;
 use App\Domain\Agent\Models\Agent;
 use App\Domain\Agent\Models\ExecutionSession;
+use App\Domain\Agent\Services\AgentOrchestrator;
 use App\Domain\Agent\Services\SessionManager;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
@@ -15,6 +17,7 @@ class ExecutionSessionController extends Controller
 {
     public function __construct(
         private readonly SessionManager $sessionManager,
+        private readonly AgentOrchestrator $orchestrator,
     ) {}
 
     public function index(Request $request, ?Agent $agent = null): Response
@@ -74,6 +77,38 @@ class ExecutionSessionController extends Controller
                 'created_at' => $message->created_at?->toISOString(),
             ]),
         ]);
+    }
+
+    public function run(Request $request, ExecutionSession $session)
+    {
+        abort_unless($session->organization_id === $request->user()->organization_id, 403);
+
+        $data = $request->validate([
+            'prompt' => ['required', 'string', 'max:4000'],
+            'files.*' => ['nullable', 'file', 'max:10240', 'mimes:txt,pdf,md,csv,json,xml,html,jpg,jpeg,png,gif,webp,doc,docx'],
+        ]);
+
+        $agent = $session->agent;
+        $files = $request->hasFile('files') ? $request->file('files') : [];
+
+        $stream = $this->orchestrator->execute(
+            $agent,
+            $request->user(),
+            $data['prompt'],
+            $files,
+        );
+
+        $stream->then(function ($response) use ($session): void {
+            $this->sessionManager->appendMessage(
+                $session,
+                MessageRole::Assistant,
+                $response->text ?? '',
+            );
+
+            $this->sessionManager->complete($session);
+        });
+
+        return $stream;
     }
 
     public function destroy(Request $request, ExecutionSession $session): RedirectResponse

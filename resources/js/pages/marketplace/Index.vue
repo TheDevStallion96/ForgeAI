@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3'
+import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import { computed } from 'vue'
 import {
     Bot,
     Cpu,
@@ -27,6 +28,11 @@ defineOptions({
             { title: 'Marketplace', href: marketplace.index().url },
         ],
     },
+})
+
+const page = usePage()
+const searchParam = computed(() => {
+    try { return new URL(page.url, window.location.origin).searchParams.get('search') ?? '' } catch { return '' }
 })
 
 const props = defineProps<{
@@ -86,7 +92,7 @@ function categoryIcon(category: string) {
                 <Input
                     placeholder="Search marketplace..."
                     class="pl-8"
-                    :model-value="$page.url.searchParams.get('search') ?? ''"
+                    :model-value="searchParam"
                     @input="router.get(marketplace.index().url, { search: ($event.target as HTMLInputElement).value, category: currentCategory }, { preserveScroll: true, preserveState: true })"
                 />
             </div>

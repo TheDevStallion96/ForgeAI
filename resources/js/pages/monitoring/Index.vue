@@ -16,6 +16,31 @@ import {
 } from '@/components/ui/card'
 import monitoring from '@/routes/monitoring'
 
+type Metric = {
+    label: string
+    value: string
+    icon: string
+    change: string
+    color: string
+}
+
+type AlertItem = {
+    severity: string
+    message: string
+    time: string
+}
+
+type AuditItem = {
+    message: string
+    time: string
+}
+
+defineProps<{
+    metrics: Metric[]
+    alerts: AlertItem[]
+    recentAudit: AuditItem[]
+}>()
+
 defineOptions({
     layout: {
         breadcrumbs: [
@@ -24,19 +49,18 @@ defineOptions({
     },
 })
 
-const metrics = [
-    { label: 'API Response Time', value: '245ms', icon: Timer, change: '-12%', color: 'text-emerald-500 bg-emerald-100 dark:bg-emerald-950/50' },
-    { label: 'Active Queues', value: '3', icon: Server, change: '1,245 jobs', color: 'text-sky-500 bg-sky-100 dark:bg-sky-950/50' },
-    { label: 'Error Rate', value: '0.02%', icon: AlertTriangle, change: 'Below threshold', color: 'text-emerald-500 bg-emerald-100 dark:bg-emerald-950/50' },
-    { label: 'Avg Token Latency', value: '1.2s', icon: Cpu, change: '+5% this hour', color: 'text-amber-500 bg-amber-100 dark:bg-amber-950/50' },
-]
+const iconMap: Record<string, typeof Timer> = {
+    Timer,
+    Server,
+    AlertTriangle,
+    Cpu,
+}
 
-const recentAlerts = [
-    { severity: 'warning', message: 'Token budget at 85% for Forge AI', time: '10 min ago' },
-    { severity: 'info', message: 'Agent "Code Reviewer" completed successfully', time: '25 min ago' },
-    { severity: 'critical', message: 'Deployment to production failed: forge-ai/agents', time: '1h ago' },
-    { severity: 'warning', message: 'API key "OpenAI Production" expires in 7 days', time: '2h ago' },
-]
+const severityColors: Record<string, string> = {
+    critical: 'bg-red-100 text-red-600 dark:bg-red-950/50',
+    warning: 'bg-amber-100 text-amber-600 dark:bg-amber-950/50',
+    info: 'bg-sky-100 text-sky-600 dark:bg-sky-950/50',
+}
 </script>
 
 <template>
@@ -55,13 +79,13 @@ const recentAlerts = [
                 <CardHeader class="flex flex-row items-center justify-between pb-2">
                     <CardTitle class="text-sm font-medium text-muted-foreground">{{ metric.label }}</CardTitle>
                     <div class="rounded-lg p-2" :class="metric.color">
-                        <component :is="metric.icon" class="h-4 w-4" />
+                        <component :is="iconMap[metric.icon] || Activity" class="h-4 w-4" />
                     </div>
                 </CardHeader>
                 <CardContent>
                     <div class="text-2xl font-bold">{{ metric.value }}</div>
                     <p class="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                        <Activity class="h-3 w-3" :class="metric.change.startsWith('+') ? 'text-red-500' : 'text-emerald-500'" />
+                        <Activity class="h-3 w-3 text-emerald-500" />
                         {{ metric.change }}
                     </p>
                 </CardContent>
@@ -73,39 +97,18 @@ const recentAlerts = [
                 <CardHeader>
                     <CardTitle class="text-base flex items-center gap-2">
                         <Server class="h-4 w-4" />
-                        Queue Workers
+                        Recent Audit Events
                     </CardTitle>
-                    <CardDescription>Horizon queue worker metrics</CardDescription>
+                    <CardDescription>System activity</CardDescription>
                 </CardHeader>
-                <CardContent class="space-y-4">
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between text-sm">
-                            <span class="flex items-center gap-2">
-                                <div class="size-2 rounded-full bg-emerald-500" />
-                                Default Queue
-                            </span>
-                            <span class="text-muted-foreground">2 workers · 0 jobs</span>
+                <CardContent class="space-y-3">
+                    <div v-for="(event, i) in recentAudit" :key="i" class="flex items-start gap-3 border-b pb-3 last:border-0 last:pb-0">
+                        <div class="flex size-7 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-600 dark:bg-sky-950/50 mt-0.5">
+                            <Activity class="h-3.5 w-3.5" />
                         </div>
-                        <div class="flex items-center justify-between text-sm">
-                            <span class="flex items-center gap-2">
-                                <div class="size-2 rounded-full bg-emerald-500" />
-                                AI Completions
-                            </span>
-                            <span class="text-muted-foreground">4 workers · 3 jobs</span>
-                        </div>
-                        <div class="flex items-center justify-between text-sm">
-                            <span class="flex items-center gap-2">
-                                <div class="size-2 rounded-full bg-amber-500" />
-                                Knowledge Indexing
-                            </span>
-                            <span class="text-muted-foreground">1 worker · 12 jobs</span>
-                        </div>
-                        <div class="flex items-center justify-between text-sm">
-                            <span class="flex items-center gap-2">
-                                <div class="size-2 rounded-full bg-red-500" />
-                                Failed Jobs
-                            </span>
-                            <span class="text-muted-foreground">0 workers · 2 failed</span>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm">{{ event.message }}</p>
+                            <p class="text-xs text-muted-foreground">{{ event.time }}</p>
                         </div>
                     </div>
                 </CardContent>
@@ -115,18 +118,16 @@ const recentAlerts = [
                 <CardHeader>
                     <CardTitle class="text-base flex items-center gap-2">
                         <AlertTriangle class="h-4 w-4" />
-                        Recent Alerts
+                        Active Alerts
                     </CardTitle>
-                    <CardDescription>System notifications</CardDescription>
+                    <CardDescription>Unacknowledged notifications</CardDescription>
                 </CardHeader>
                 <CardContent class="space-y-3">
-                    <div v-for="(alert, i) in recentAlerts" :key="i" class="flex items-start gap-3 pb-3 border-b last:border-0 last:pb-0">
-                        <div
-                            class="flex size-7 shrink-0 items-center justify-center rounded-full mt-0.5"
-                            :class="alert.severity === 'critical' ? 'bg-red-100 text-red-600 dark:bg-red-950/50' :
-                                alert.severity === 'warning' ? 'bg-amber-100 text-amber-600 dark:bg-amber-950/50' :
-                                'bg-sky-100 text-sky-600 dark:bg-sky-950/50'"
-                        >
+                    <div v-if="alerts.length === 0" class="py-8 text-center text-sm text-muted-foreground">
+                        No active alerts.
+                    </div>
+                    <div v-for="(alert, i) in alerts" :key="i" class="flex items-start gap-3 border-b pb-3 last:border-0 last:pb-0">
+                        <div class="flex size-7 shrink-0 items-center justify-center rounded-full mt-0.5" :class="severityColors[alert.severity] || severityColors.info">
                             <component :is="alert.severity === 'critical' ? AlertTriangle : Activity" class="h-3.5 w-3.5" />
                         </div>
                         <div class="flex-1 min-w-0">

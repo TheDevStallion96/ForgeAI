@@ -34,11 +34,11 @@ it('validates the prompt is required', function () {
     $response->assertInvalid(['prompt']);
 });
 
-it('validates the prompt does not exceed 2000 characters', function () {
+it('validates the prompt does not exceed 4000 characters', function () {
     $response = $this
         ->actingAs($this->user)
         ->post(route('ai.chat'), [
-            'prompt' => str_repeat('a', 2001),
+            'prompt' => str_repeat('a', 4001),
         ]);
 
     $response->assertInvalid(['prompt']);

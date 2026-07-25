@@ -9,5 +9,8 @@ class CompletionRequest
         public readonly ?string $systemInstruction = null,
         public readonly array $provider = [],
         public readonly ?string $model = null,
+        public readonly ?array $attachments = null,
+        public readonly ?array $tools = null,
+        public readonly int $maxSteps = 1,
     ) {}
 }

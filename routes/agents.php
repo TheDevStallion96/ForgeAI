@@ -15,5 +15,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('agents/sessions', [ExecutionSessionController::class, 'index'])->name('agents.sessions.index');
     Route::get('agents/{agent}/sessions', [ExecutionSessionController::class, 'index'])->name('agents.sessions.by-agent');
     Route::get('agents/sessions/{session}', [ExecutionSessionController::class, 'show'])->name('agents.sessions.show');
+    Route::post('agents/sessions/{session}/run', [ExecutionSessionController::class, 'run'])->name('agents.sessions.run');
     Route::delete('agents/sessions/{session}', [ExecutionSessionController::class, 'destroy'])->name('agents.sessions.destroy');
 });

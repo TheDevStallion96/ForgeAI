@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3'
+import { Head, Link, router } from '@inertiajs/vue3'
+import { ref } from 'vue'
 import {
     CircleCheckBig,
     Code2,
@@ -17,6 +18,17 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { show as workspaceShow } from '@/routes/workspaces'
 
 type Workspace = {
@@ -31,6 +43,20 @@ type Workspace = {
 defineProps<{
     workspaces: Workspace[]
 }>()
+
+const showDialog = ref(false)
+const form = ref({ name: '', description: '' })
+
+function createWorkspace() {
+    router.post('/workspaces', form.value, {
+        preserveState: true,
+        preserveScroll: true,
+        onSuccess: () => {
+            showDialog.value = false
+            form.value = { name: '', description: '' }
+        },
+    })
+}
 
 defineOptions({
     layout: {
@@ -67,10 +93,34 @@ function randomIcon(index: number) {
                     Manage your project workspaces, boards, and backlogs.
                 </p>
             </div>
-            <Button size="sm">
-                <Plus class="mr-1.5 h-4 w-4" />
-                New Workspace
-            </Button>
+            <Dialog v-model:open="showDialog">
+                <DialogTrigger as-child>
+                    <Button size="sm">
+                        <Plus class="mr-1.5 h-4 w-4" />
+                        New Workspace
+                    </Button>
+                </DialogTrigger>
+                <DialogContent class="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>New Workspace</DialogTitle>
+                        <DialogDescription>Create a workspace for your project.</DialogDescription>
+                    </DialogHeader>
+                    <div class="grid gap-4">
+                        <div>
+                            <label class="text-sm font-medium">Name</label>
+                            <Input v-model="form.name" placeholder="Workspace name..." />
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium">Description</label>
+                            <Textarea v-model="form.description" placeholder="Optional description..." rows="2" />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" @click="showDialog = false">Cancel</Button>
+                        <Button @click="createWorkspace">Create</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
 
         <div v-if="workspaces.length === 0" class="flex flex-col items-center justify-center py-20">

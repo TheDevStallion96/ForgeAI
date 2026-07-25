@@ -16,6 +16,26 @@ import {
 } from '@/components/ui/card'
 import deployments from '@/routes/deployments'
 
+type Pipeline = {
+    id: number
+    name: string
+    environment: string
+    status: string
+    version: string | null
+    started_at: string
+    completed_at: string | null
+}
+
+defineProps<{
+    pipelines: Pipeline[]
+    stats: {
+        total: number
+        production_healthy: number
+        staging_active: number
+        failed: number
+    }
+}>()
+
 defineOptions({
     layout: {
         breadcrumbs: [
@@ -23,13 +43,6 @@ defineOptions({
         ],
     },
 })
-
-const pipelines = [
-    { name: 'forge-ai/core', env: 'production', status: 'running', version: 'v1.2.3', started: '5 min ago' },
-    { name: 'forge-ai/frontend', env: 'staging', status: 'success', version: 'v2.1.0', started: '1h ago' },
-    { name: 'forge-ai/agents', env: 'production', status: 'failed', version: 'v0.5.0', started: '3h ago' },
-    { name: 'forge-ai/docs', env: 'staging', status: 'pending', version: 'v1.0.0', started: '--' },
-]
 
 const envColors: Record<string, string> = {
     production: 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300 border-red-200 dark:border-red-800',
@@ -68,43 +81,53 @@ const statusColors: Record<string, string> = {
                 <CardHeader class="pb-2">
                     <CardTitle class="text-sm font-medium text-muted-foreground">Total Pipelines</CardTitle>
                 </CardHeader>
-                <CardContent class="text-2xl font-bold">{{ pipelines.length }}</CardContent>
+                <CardContent class="text-2xl font-bold">{{ stats.total }}</CardContent>
             </Card>
             <Card>
                 <CardHeader class="pb-2">
                     <CardTitle class="text-sm font-medium text-muted-foreground">Production</CardTitle>
                 </CardHeader>
-                <CardContent class="text-2xl font-bold text-emerald-500">2 Healthy</CardContent>
+                <CardContent class="text-2xl font-bold text-emerald-500">{{ stats.production_healthy }} Healthy</CardContent>
             </Card>
             <Card>
                 <CardHeader class="pb-2">
                     <CardTitle class="text-sm font-medium text-muted-foreground">Staging</CardTitle>
                 </CardHeader>
-                <CardContent class="text-2xl font-bold text-amber-500">2 Active</CardContent>
+                <CardContent class="text-2xl font-bold text-amber-500">{{ stats.staging_active }} Active</CardContent>
             </Card>
             <Card>
                 <CardHeader class="pb-2">
                     <CardTitle class="text-sm font-medium text-muted-foreground">Failed</CardTitle>
                 </CardHeader>
-                <CardContent class="text-2xl font-bold text-red-500">1</CardContent>
+                <CardContent class="text-2xl font-bold text-red-500">{{ stats.failed }}</CardContent>
             </Card>
         </div>
 
-        <div class="space-y-3">
-            <div v-for="pipeline in pipelines" :key="pipeline.name" class="flex items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-muted/50">
+        <div v-if="pipelines.length === 0" class="flex flex-col items-center justify-center py-20">
+            <div class="mb-4 rounded-full bg-muted p-4">
+                <Rocket class="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 class="text-lg font-medium">No pipelines yet</h3>
+            <p class="mt-1 text-sm text-muted-foreground">
+                Create a deployment pipeline to get started.
+            </p>
+        </div>
+
+        <div v-else class="space-y-3">
+            <div v-for="pipeline in pipelines" :key="pipeline.id" class="flex items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-muted/50">
                 <div class="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                     <Rocket class="h-5 w-5" />
                 </div>
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2">
                         <span class="text-sm font-medium font-mono">{{ pipeline.name }}</span>
-                        <Badge variant="outline" :class="envColors[pipeline.env] ?? ''" class="capitalize">
+                        <Badge variant="outline" :class="envColors[pipeline.environment] ?? ''" class="capitalize">
                             <Server class="mr-1 h-3 w-3" />
-                            {{ pipeline.env }}
+                            {{ pipeline.environment }}
                         </Badge>
-                        <Badge variant="outline">{{ pipeline.version }}</Badge>
+                        <Badge v-if="pipeline.version" variant="outline">{{ pipeline.version }}</Badge>
                     </div>
-                    <p class="mt-0.5 text-xs text-muted-foreground">Started {{ pipeline.started }}</p>
+                    <p class="mt-0.5 text-xs text-muted-foreground">Started {{ pipeline.started_at }}</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <component :is="statusIcons[pipeline.status] || Clock" class="h-5 w-5" :class="statusColors[pipeline.status] || 'text-muted-foreground'" />

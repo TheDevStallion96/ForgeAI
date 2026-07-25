@@ -28,3 +28,4 @@ require __DIR__.'/source-control.php';
 require __DIR__.'/deployments.php';
 require __DIR__.'/monitoring.php';
 require __DIR__.'/marketplace.php';
+require __DIR__.'/ai.php';

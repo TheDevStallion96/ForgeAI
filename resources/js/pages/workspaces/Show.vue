@@ -1,22 +1,44 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3'
+import { Head, router } from '@inertiajs/vue3'
 import {
-    ArrowRight,
-    Bug,
-    CheckCircle2,
-    CircleDot,
+    Bot,
+    BotMessageSquare,
     Clock,
-    Code2,
-    Columns3,
-    GitBranch,
-    ListTree,
+    History,
+    Info,
+    Layers,
+    MessagesSquare,
     Network,
     Plus,
     Sparkles,
 } from '@lucide/vue'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select'
+import ChatWindow from '@/components/agent/ChatWindow.vue'
+import type { Message } from '@/components/agent/ChatWindow.vue'
+import agentsRoutes from '@/routes/agents'
+
+type Agent = {
+    id: number
+    name: string
+    primary_model: string
+}
+
+type Session = {
+    id: number
+    agent_name: string
+    status: string
+    message_count: number
+    created_at: string
+}
 
 type Workspace = {
     id: number
@@ -26,283 +48,324 @@ type Workspace = {
     status: string
 }
 
-defineProps<{
+const props = defineProps<{
     workspace: Workspace
+    agents: Agent[]
+    sessions: Session[]
 }>()
 
 defineOptions({
-    layout: (props: { workspace: Workspace }) => ({
+    layout: (pr: { workspace: Workspace }) => ({
         breadcrumbs: [
-            {
-                title: 'Workspaces',
-                href: '/workspaces',
-            },
-            {
-                title: props.workspace.name,
-                href: `/workspaces/${props.workspace.id}`,
-            },
+            { title: 'Workspaces', href: '/workspaces' },
+            { title: pr.workspace.name, href: `/workspaces/${pr.workspace.id}` },
         ],
     }),
 })
 
-type Tab = 'board' | 'backlog' | 'graph'
-const activeTab = ref<Tab>('board')
+const selectedAgentId = ref<number | null>(props.agents[0]?.id ?? null)
+const activeSessionId = ref<number | null>(null)
+const messages = ref<Message[]>([])
+const streaming = ref(false)
+const streamingContent = ref('')
+const rightTab = ref<'sessions' | 'agents' | 'info'>('sessions')
 
-const tabs: { id: Tab; label: string; icon: typeof Columns3 }[] = [
-    { id: 'board', label: 'Kanban Board', icon: Columns3 },
-    { id: 'backlog', label: 'Backlog Tree', icon: ListTree },
-    { id: 'graph', label: 'Graph View', icon: Network },
-]
+const selectedAgent = computed(() =>
+    props.agents.find(a => a.id === selectedAgentId.value),
+)
 
-type Column = {
-    id: string
-    title: string
-    items: { id: number; title: string; description: string; priority: string; assignee: string; tags: string[] }[]
+const statusConfig: Record<string, { label: string; class: string }> = {
+    active: { label: 'Active', class: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400' },
+    completed: { label: 'Completed', class: 'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400' },
+    failed: { label: 'Failed', class: 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400' },
+    pending: { label: 'Pending', class: 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400' },
 }
 
-const columns = ref<Column[]>([
-    {
-        id: 'backlog',
-        title: 'Backlog',
-        items: [
-            { id: 1, title: 'Design API rate limiting', description: 'Implement rate limiting per API key', priority: 'medium', assignee: 'Alex', tags: ['backend'] },
-            { id: 2, title: 'Research vector DB options', description: 'Compare pgvector, Qdrant, Pinecone', priority: 'low', assignee: 'Sam', tags: ['research'] },
-            { id: 5, title: 'Write E2E test suite', description: 'Cover core agent execution flows', priority: 'medium', assignee: 'Jordan', tags: ['testing'] },
-        ],
-    },
-    {
-        id: 'todo',
-        title: 'To Do',
-        items: [
-            { id: 3, title: 'Agent session persistence', description: 'Save agent state to database on interrupt', priority: 'high', assignee: 'Taylor', tags: ['backend', 'core'] },
-            { id: 6, title: 'SSE streaming for chat UI', description: 'Real-time token streaming via Server-Sent Events', priority: 'high', assignee: 'Morgan', tags: ['frontend'] },
-        ],
-    },
-    {
-        id: 'in-progress',
-        title: 'In Progress',
-        items: [
-            { id: 4, title: 'Multi-provider failover', description: 'Automatic failover between OpenAI, Anthropic, Gemini', priority: 'high', assignee: 'Taylor', tags: ['backend', 'core', 'ai'] },
-        ],
-    },
-    {
-        id: 'done',
-        title: 'Done',
-        items: [
-            { id: 7, title: 'Project scaffolding', description: 'Laravel + Inertia + Vue project setup', priority: 'high', assignee: 'Tristan', tags: ['infra'] },
-            { id: 8, title: 'Team invitation flow', description: 'Invite members via email with acceptance', priority: 'high', assignee: 'Tristan', tags: ['auth'] },
-            { id: 9, title: 'Dark mode support', description: 'Tailwind dark mode + theme toggle', priority: 'medium', assignee: 'Jordan', tags: ['frontend', 'ui'] },
-        ],
-    },
-])
-
-const priorityStyles: Record<string, string> = {
-    high: 'border-red-400 bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400 dark:border-red-800',
-    medium: 'border-amber-400 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800',
-    low: 'border-sky-400 bg-sky-50 text-sky-700 dark:bg-sky-950/30 dark:text-sky-400 dark:border-sky-800',
+function startNewSession() {
+    activeSessionId.value = null
+    messages.value = []
 }
 
-const tagStyles: Record<string, string> = {
-    backend: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
-    frontend: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300',
-    testing: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
-    research: 'bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300',
-    core: 'bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300',
-    ai: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-950/50 dark:text-cyan-300',
-    auth: 'bg-orange-100 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300',
-    infra: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-    ui: 'bg-pink-100 text-pink-700 dark:bg-pink-950/50 dark:text-pink-300',
+function openSession(session: Session) {
+    activeSessionId.value = session.id
+    router.get(agentsRoutes.sessions.show(session.id).url, {}, {
+        preserveState: true,
+        preserveScroll: true,
+        onSuccess: (page) => {
+            const data = page.props as Record<string, unknown>
+            const msgs = data.messages as Message[] | undefined
+            if (msgs) messages.value = msgs
+        },
+    })
+}
+
+async function sendMessage(prompt: string) {
+    if (!selectedAgentId.value) return
+
+    if (!activeSessionId.value) {
+        messages.value.push({
+            id: `temp-${Date.now()}`,
+            role: 'user',
+            content: prompt,
+        })
+        messages.value.push({
+            id: `temp-stream-${Date.now()}`,
+            role: 'assistant',
+            content: null,
+        })
+        streaming.value = true
+
+        try {
+            const res = await fetch('/ai/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': (document.querySelector('meta[name=csrf-token]') as HTMLMetaElement)?.content ?? '' },
+                body: JSON.stringify({ prompt, agent_id: selectedAgentId.value }),
+            })
+
+            if (!res.ok) throw new Error('Chat request failed')
+            if (!res.body) throw new Error('No response body')
+
+            const reader = res.body.getReader()
+            const decoder = new TextDecoder()
+            let buffer = ''
+
+            while (true) {
+                const { done, value } = await reader.read()
+                if (done) break
+
+                buffer += decoder.decode(value, { stream: true })
+                const lines = buffer.split('\n')
+                buffer = lines.pop() ?? ''
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const data = line.slice(6)
+                        if (data === '[DONE]') continue
+                        try {
+                            const parsed = JSON.parse(data)
+                            if (parsed.type === 'text-delta' && parsed.delta) {
+                                streamingContent.value += parsed.delta
+                            }
+                        } catch {
+                            streamingContent.value += data
+                        }
+                    }
+                }
+            }
+
+            messages.value = messages.value.filter(m => !m.id.toString().startsWith('temp-'))
+        } catch (err) {
+            console.error('Stream error:', err)
+        } finally {
+            streaming.value = false
+            streamingContent.value = ''
+        }
+        return
+    }
+
+    messages.value.push({
+        id: `msg-${Date.now()}`,
+        role: 'user',
+        content: prompt,
+    })
+
+    streaming.value = true
+    streamingContent.value = ''
+
+    try {
+        const res = await fetch(agentsRoutes.sessions.run(activeSessionId.value).url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': (document.querySelector('meta[name=csrf-token]') as HTMLMetaElement)?.content ?? '' },
+            body: JSON.stringify({ prompt }),
+        })
+
+        if (!res.ok) throw new Error('Session run failed')
+        if (!res.body) throw new Error('No response body')
+
+        const reader = res.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+
+        while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+
+            buffer += decoder.decode(value, { stream: true })
+            const lines = buffer.split('\n')
+            buffer = lines.pop() ?? ''
+
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const data = line.slice(6)
+                    if (data === '[DONE]') continue
+                    try {
+                        const parsed = JSON.parse(data)
+                        if (parsed.type === 'text-delta' && parsed.delta) {
+                            streamingContent.value += parsed.delta
+                        }
+                    } catch {
+                        streamingContent.value += data
+                    }
+                }
+            }
+        }
+    } catch (err) {
+        console.error('Stream error:', err)
+    } finally {
+        streaming.value = false
+        streamingContent.value = ''
+    }
+}
+
+function stopStreaming() {
+    streaming.value = false
 }
 </script>
 
 <template>
     <Head :title="workspace.name" />
 
-    <div class="flex flex-1 flex-col gap-6 p-6">
-        <div class="flex items-start justify-between">
-            <div>
-                <div class="flex items-center gap-3">
-                    <h1 class="text-2xl font-semibold tracking-tight">{{ workspace.name }}</h1>
-                    <Badge
-                        variant="outline"
-                        :class="workspace.status === 'active' ? 'border-emerald-400 text-emerald-600 dark:text-emerald-400' : ''"
-                    >
-                        {{ workspace.status }}
-                    </Badge>
+    <div class="flex h-full flex-1">
+        <div class="flex flex-1 flex-col border-r">
+            <div class="flex items-center justify-between border-b px-4 py-2.5">
+                <div class="flex items-center gap-2">
+                    <div class="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Layers class="h-4 w-4" />
+                    </div>
+                    <div>
+                        <h1 class="text-sm font-semibold">{{ workspace.name }}</h1>
+                        <p class="text-xs text-muted-foreground">{{ workspace.description ?? 'Agent workspace' }}</p>
+                    </div>
                 </div>
-                <p class="mt-1 text-sm text-muted-foreground">
-                    {{ workspace.description ?? 'No description' }}
-                </p>
+                <div class="flex items-center gap-2">
+                    <Select v-model="selectedAgentId">
+                        <SelectTrigger class="w-44 h-8 text-xs">
+                            <SelectValue placeholder="Select agent..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem v-for="agent in agents" :key="agent.id" :value="agent.id">
+                                <div class="flex items-center gap-2">
+                                    <Bot class="h-3.5 w-3.5" />
+                                    {{ agent.name }}
+                                </div>
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Button size="sm" variant="outline" @click="startNewSession" :disabled="!selectedAgentId">
+                        <Plus class="h-3.5 w-3.5 mr-1" />
+                        New Session
+                    </Button>
+                </div>
             </div>
-            <div class="flex items-center gap-2">
-                <Button variant="outline" size="sm">
-                    <GitBranch class="mr-1.5 h-4 w-4" />
-                    main
-                </Button>
-                <Button size="sm">
-                    <Plus class="mr-1.5 h-4 w-4" />
-                    Add Task
-                </Button>
-            </div>
+
+            <ChatWindow
+                :messages="messages"
+                :streaming="streaming"
+                :streaming-content="streamingContent"
+                :disabled="!selectedAgentId"
+                placeholder="Ask your agent..."
+                @send="sendMessage"
+                @stop="stopStreaming"
+            />
         </div>
 
-        <div class="flex gap-1 rounded-lg bg-muted p-1 w-fit">
-            <button
-                v-for="tab in tabs"
-                :key="tab.id"
-                @click="activeTab = tab.id"
-                class="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
-                :class="activeTab === tab.id
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'"
-            >
-                <component :is="tab.icon" class="h-4 w-4" />
-                {{ tab.label }}
-            </button>
-        </div>
-
-        <div v-if="activeTab === 'board'" class="overflow-x-auto pb-4">
-            <div class="flex gap-4 min-w-max">
-                <div
-                    v-for="column in columns"
-                    :key="column.id"
-                    class="flex w-72 flex-shrink-0 flex-col rounded-xl border bg-card"
+        <div class="w-72 flex-shrink-0 bg-muted/30">
+            <div class="flex border-b">
+                <button
+                    v-for="tab in [{ id: 'sessions', icon: History, label: 'Sessions' }, { id: 'agents', icon: BotMessageSquare, label: 'Agents' }, { id: 'info', icon: Info, label: 'Info' }]"
+                    :key="tab.id"
+                    class="flex flex-1 items-center justify-center gap-1.5 border-b-2 px-3 py-2 text-xs font-medium transition-colors"
+                    :class="rightTab === tab.id
+                        ? 'border-primary text-foreground'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'"
+                    @click="rightTab = tab.id as typeof rightTab"
                 >
-                    <div class="flex items-center justify-between border-b px-4 py-3">
-                        <div class="flex items-center gap-2">
-                            <h3 class="text-sm font-medium">{{ column.title }}</h3>
-                            <span class="inline-flex size-5 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
-                                {{ column.items.length }}
-                            </span>
-                        </div>
-                        <Button variant="ghost" size="icon" class="size-6">
+                    <component :is="tab.icon" class="h-3.5 w-3.5" />
+                    {{ tab.label }}
+                </button>
+            </div>
+
+            <div class="h-[calc(100vh-10rem)] overflow-y-auto">
+                <div v-if="rightTab === 'sessions'" class="p-3 space-y-2">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-xs font-medium text-muted-foreground">Recent Sessions</h3>
+                        <Button variant="ghost" size="icon-sm" @click="startNewSession" :disabled="!selectedAgentId">
                             <Plus class="h-3.5 w-3.5" />
                         </Button>
                     </div>
 
-                    <div class="flex flex-col gap-3 p-3">
-                        <div
-                            v-for="item in column.items"
-                            :key="item.id"
-                            class="group rounded-lg border bg-card p-3 shadow-sm transition-all hover:shadow-md cursor-pointer"
-                        >
-                            <div class="flex items-start justify-between gap-2">
-                                <h4 class="text-sm font-medium leading-snug">{{ item.title }}</h4>
-                                <span
-                                    class="inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium"
-                                    :class="priorityStyles[item.priority]"
-                                >
-                                    <CircleDot class="h-2.5 w-2.5" />
-                                    {{ item.priority }}
-                                </span>
-                            </div>
-                            <p class="mt-1 text-xs text-muted-foreground line-clamp-2">
-                                {{ item.description }}
-                            </p>
-                            <div class="mt-3 flex items-center justify-between">
-                                <div class="flex flex-wrap gap-1">
-                                    <span
-                                        v-for="tag in item.tags"
-                                        :key="tag"
-                                        class="inline-flex rounded px-1.5 py-0.5 text-[10px] font-medium"
-                                        :class="tagStyles[tag] ?? 'bg-muted text-muted-foreground'"
-                                    >
-                                        {{ tag }}
-                                    </span>
-                                </div>
-                                <span class="inline-flex size-6 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
-                                    {{ item.assignee.charAt(0) }}
-                                </span>
-                            </div>
+                    <div v-if="sessions.length === 0" class="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                        <MessagesSquare class="mb-2 h-6 w-6" />
+                        <p class="text-xs">No sessions yet</p>
+                    </div>
+
+                    <button
+                        v-for="session in sessions"
+                        :key="session.id"
+                        class="w-full rounded-lg border bg-card p-2.5 text-left text-xs transition-colors hover:bg-accent"
+                        :class="activeSessionId === session.id ? 'border-primary' : ''"
+                        @click="openSession(session)"
+                    >
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium">{{ session.agent_name }}</span>
+                            <Badge variant="outline" :class="statusConfig[session.status]?.class ?? ''">
+                                {{ statusConfig[session.status]?.label ?? session.status }}
+                            </Badge>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div v-if="activeTab === 'backlog'" class="rounded-xl border bg-card p-6">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-lg font-medium">Backlog Tree</h3>
-                <Button variant="outline" size="sm">
-                    <ListTree class="mr-1.5 h-4 w-4" />
-                    Expand All
-                </Button>
-            </div>
-
-            <div class="space-y-1">
-                <div
-                    v-for="(column) in columns"
-                    :key="column.id"
-                >
-                    <div class="flex items-center gap-2 py-2 text-sm font-medium text-muted-foreground">
-                        <ArrowRight class="h-3.5 w-3.5" />
-                        {{ column.title }}
-                        <span class="text-xs">({{ column.items.length }})</span>
-                    </div>
-                    <div class="ml-6 space-y-1 border-l pl-4">
-                        <div
-                            v-for="item in column.items"
-                            :key="item.id"
-                            class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-muted/50 transition-colors cursor-pointer"
-                        >
-                            <CheckCircle2
-                                v-if="column.id === 'done'"
-                                class="h-4 w-4 text-emerald-500"
-                            />
-                            <Clock
-                                v-else-if="column.id === 'in-progress'"
-                                class="h-4 w-4 text-amber-500"
-                            />
-                            <CircleDot
-                                v-else
-                                class="h-4 w-4 text-muted-foreground"
-                            />
-                            <span :class="column.id === 'done' ? 'line-through text-muted-foreground' : ''">
-                                {{ item.title }}
+                        <div class="mt-1 flex items-center gap-3 text-muted-foreground">
+                            <span class="flex items-center gap-1">
+                                <MessagesSquare class="h-3 w-3" />
+                                {{ session.message_count }}
                             </span>
-                            <div class="flex gap-1 ml-auto">
-                                <span
-                                    v-for="tag in item.tags"
-                                    :key="tag"
-                                    class="inline-flex rounded px-1.5 py-0.5 text-[10px] font-medium"
-                                    :class="tagStyles[tag] ?? 'bg-muted text-muted-foreground'"
-                                >
-                                    {{ tag }}
-                                </span>
-                            </div>
+                            <span class="flex items-center gap-1">
+                                <Clock class="h-3 w-3" />
+                                {{ new Date(session.created_at).toLocaleDateString() }}
+                            </span>
+                        </div>
+                    </button>
+                </div>
+
+                <div v-if="rightTab === 'agents'" class="p-3 space-y-2">
+                    <h3 class="text-xs font-medium text-muted-foreground mb-2">Available Agents</h3>
+                    <div
+                        v-for="agent in agents"
+                        :key="agent.id"
+                        class="rounded-lg border bg-card p-2.5 text-xs cursor-pointer transition-colors hover:bg-accent"
+                        :class="selectedAgentId === agent.id ? 'border-primary' : ''"
+                        @click="selectedAgentId = agent.id"
+                    >
+                        <div class="flex items-center gap-2 font-medium">
+                            <Bot class="h-3.5 w-3.5" />
+                            {{ agent.name }}
+                        </div>
+                        <p class="mt-1 text-muted-foreground truncate">{{ agent.primary_model }}</p>
+                    </div>
+                </div>
+
+                <div v-if="rightTab === 'info'" class="p-3 space-y-3">
+                    <h3 class="text-xs font-medium text-muted-foreground">Workspace Info</h3>
+                    <div class="rounded-lg border bg-card p-3 text-xs space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-muted-foreground">Status</span>
+                            <Badge variant="outline" :class="statusConfig[workspace.status]?.class ?? ''">
+                                {{ workspace.status }}
+                            </Badge>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-muted-foreground">Slug</span>
+                            <span class="font-mono">{{ workspace.slug }}</span>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
 
-        <div v-if="activeTab === 'graph'" class="rounded-xl border bg-card p-6">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-lg font-medium">Engineering Graph</h3>
-                <div class="flex gap-2">
-                    <Button variant="outline" size="sm">
-                        <Bug class="mr-1.5 h-4 w-4" />
-                        Dependencies
-                    </Button>
-                    <Button variant="outline" size="sm">
-                        <Sparkles class="mr-1.5 h-4 w-4" />
-                        Auto-layout
-                    </Button>
-                </div>
-            </div>
-
-            <div class="relative flex h-96 items-center justify-center rounded-lg border-2 border-dashed bg-muted/30">
-                <div class="flex flex-col items-center gap-3 text-center">
-                    <Network class="h-12 w-12 text-muted-foreground/50" />
-                    <div>
-                        <p class="text-sm font-medium text-muted-foreground">Graph Topology Viewer</p>
-                        <p class="text-xs text-muted-foreground/60 mt-1">
-                            Visualize entity relationships and dependency graphs
-                        </p>
+                    <div class="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 text-center text-muted-foreground">
+                        <Network class="mb-2 h-8 w-8" />
+                        <p class="text-xs font-medium">Graph View</p>
+                        <p class="text-xs mt-1">Visualize entity relationships</p>
+                        <Button variant="secondary" size="sm" class="mt-3">
+                            <Sparkles class="h-3.5 w-3.5 mr-1" />
+                            Explore
+                        </Button>
                     </div>
-                    <Button variant="secondary" size="sm">
-                        <Code2 class="mr-1.5 h-4 w-4" />
-                    </Button>
                 </div>
             </div>
         </div>

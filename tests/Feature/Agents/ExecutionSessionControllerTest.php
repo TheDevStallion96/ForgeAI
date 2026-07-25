@@ -84,6 +84,51 @@ it('prevents viewing sessions from other organizations', function () {
     $response->assertForbidden();
 });
 
+it('validates the prompt is required for session run', function () {
+    $session = ExecutionSession::factory()->create([
+        'organization_id' => $this->user->organization_id,
+    ]);
+
+    $response = $this->post(route('agents.sessions.run', $session), [
+        'prompt' => '',
+    ]);
+
+    $response->assertInvalid(['prompt']);
+});
+
+it('starts a session run with valid prompt', function () {
+    $agent = Agent::factory()->create([
+        'organization_id' => $this->user->organization_id,
+        'primary_model' => 'openai:gpt-4o-mini',
+    ]);
+
+    $session = ExecutionSession::factory()->create([
+        'agent_id' => $agent->id,
+        'user_id' => $this->user->id,
+        'organization_id' => $this->user->organization_id,
+    ]);
+
+    $response = $this->post(route('agents.sessions.run', $session), [
+        'prompt' => 'Hello, agent!',
+    ]);
+
+    expect($session->fresh()->messages()->count())->toBe(1);
+    expect($session->fresh()->messages()->first()->content)->toBe('Hello, agent!');
+});
+
+it('prevents running sessions from other organizations', function () {
+    $otherOrg = Organization::factory()->create();
+    $session = ExecutionSession::factory()->create([
+        'organization_id' => $otherOrg->id,
+    ]);
+
+    $response = $this->post(route('agents.sessions.run', $session), [
+        'prompt' => 'test',
+    ]);
+
+    $response->assertForbidden();
+});
+
 it('ends a session', function () {
     $session = ExecutionSession::factory()->create([
         'organization_id' => $this->user->organization_id,

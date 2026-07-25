@@ -21,7 +21,7 @@ use Illuminate\Support\Str;
  * @property-read Collection<int, Team> $teams
  * @property-read Collection<int, User> $users
  */
-#[Fillable(['name', 'slug', 'monthly_token_budget'])]
+#[Fillable(['name', 'slug', 'monthly_token_budget', 'vector_store_id'])]
 class Organization extends Model
 {
     /** @use HasFactory<OrganizationFactory> */

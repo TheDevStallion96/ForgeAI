@@ -21,35 +21,42 @@ import {
 import { dashboard } from '@/routes'
 import type { DashboardInvitation, Team } from '@/types'
 
-defineProps<{
+type Stat = {
+    label: string
+    value: string
+    change: string
+    color: string
+}
+
+type ActivityItem = {
+    event: string
+    time: string
+    type: string
+}
+
+const props = defineProps<{
     pendingInvitations?: DashboardInvitation[]
+    stats: Stat[]
+    recentActivity: ActivityItem[]
 }>()
 
+const iconMap: Record<string, typeof Bot> = {
+    'Active Agents': Bot,
+    'Token Usage': Wallet,
+    'Executions': Cpu,
+    'Active Workspaces': Layers,
+}
+
 defineOptions({
-    layout: (props: { currentTeam?: Team | null }) => ({
+    layout: (pr: { currentTeam?: Team | null }) => ({
         breadcrumbs: [
             {
                 title: 'Dashboard',
-                href: props.currentTeam ? dashboard(props.currentTeam.slug) : '/',
+                href: pr.currentTeam ? dashboard(pr.currentTeam.slug) : '/',
             },
         ],
     }),
 })
-
-const stats = [
-    { label: 'Active Agents', value: '4', icon: Bot, change: '+2 this month', color: 'text-indigo-500 bg-indigo-100 dark:bg-indigo-950/50' },
-    { label: 'Token Usage', value: '847K', icon: Wallet, change: '62% of budget', color: 'text-emerald-500 bg-emerald-100 dark:bg-emerald-950/50' },
-    { label: 'Executions', value: '1,283', icon: Cpu, change: '+18% vs last month', color: 'text-amber-500 bg-amber-100 dark:bg-amber-950/50' },
-    { label: 'Active Workspaces', value: '3', icon: Layers, change: '2 with recent activity', color: 'text-sky-500 bg-sky-100 dark:bg-sky-950/50' },
-]
-
-const recentActivity = [
-    { event: 'Agent "Code Reviewer" completed session', time: '2 min ago', type: 'agent' },
-    { event: 'New workspace "API Gateway" created', time: '15 min ago', type: 'workspace' },
-    { event: 'Budget threshold reached (80%)', time: '1 hour ago', type: 'governance' },
-    { event: 'Deployment to staging succeeded', time: '2 hours ago', type: 'deploy' },
-    { event: 'API key for OpenAI rotated', time: '3 hours ago', type: 'governance' },
-]
 
 const quickLinks = [
     { title: 'AI Agent Studio', href: '/agents', icon: Bot, desc: 'Create and manage agents' },
@@ -82,7 +89,7 @@ const quickLinks = [
                         {{ stat.label }}
                     </CardTitle>
                     <div class="rounded-lg p-2" :class="stat.color">
-                        <component :is="stat.icon" class="h-4 w-4" />
+                        <component :is="iconMap[stat.label] || Bot" class="h-4 w-4" />
                     </div>
                 </CardHeader>
                 <CardContent>

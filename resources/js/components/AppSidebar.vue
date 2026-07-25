@@ -6,10 +6,13 @@ import {
     BookOpen,
     BookMarked,
     Bot,
+    ClipboardList,
+    Coins,
     FolderGit2,
     LayoutGrid,
     Layers,
     Library,
+    MessageSquareText,
     Rocket,
     Shield,
 } from '@lucide/vue';
@@ -80,6 +83,11 @@ const intelligenceNavItems: NavItem[] = [
         icon: Library,
     },
     {
+        title: 'AI Chat',
+        href: '/ai/chat',
+        icon: MessageSquareText,
+    },
+    {
         title: 'Monitoring',
         href: '/monitoring',
         icon: Activity,
@@ -96,6 +104,16 @@ const governanceNavItems: NavItem[] = [
         title: 'Governance',
         href: '/governance/api-keys',
         icon: Shield,
+    },
+    {
+        title: 'Audit Logs',
+        href: '/governance/audit-logs',
+        icon: ClipboardList,
+    },
+    {
+        title: 'Token Budget',
+        href: '/governance/budget',
+        icon: Coins,
     },
 ];
 
